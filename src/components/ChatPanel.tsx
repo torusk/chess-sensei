@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/useGameStore';
+import { invoke } from '@tauri-apps/api/tauri';
 import { Send, Sparkles, Loader2, Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 export function ChatPanel() {
   const { messages, isAIThinking, addMessage, mode, gameState } = useGameStore();
@@ -53,17 +59,49 @@ export function ChatPanel() {
 
     addMessage(userMessage);
     setInput('');
+    setAIThinking(true);
 
-    // ここでOllama APIを呼び出す（バックエンド経由）
-    // 仮のAIレスポンス
-    setTimeout(() => {
+    try {
+      // 直近10件のコンテキストを作成
+      const recentMessages: ChatMessage[] = messages
+        .slice(-9) // 直近9件
+        .map(m => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content }));
+      
+      // ユーザーの新しいメッセージを追加
+      recentMessages.push({ role: 'user', content: input });
+
+      // システムプロンプトを追加（チェスの先生として）
+      const systemPrompt: ChatMessage = {
+        role: 'system',
+        content: 'あなたはチェスの先生です。日本語で親しみやすく、わかりやすく解説してください。局面の評価、戦略的アドバイス、具体的な手の提案など、チェスに関する質問に答えてください。'
+      };
+
+      const allMessages = [systemPrompt, ...recentMessages];
+
+      // Tauri経由でバックエンドのOllama APIを呼び出し
+      const response: string = await invoke('chat_with_ai', {
+        messages: allMessages,
+        model: 'qwen2.5:14b'
+      });
+
       addMessage({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'これはデモレスポンスです。実際のAI連携はバックエンド実装後に有効になります。',
+        content: response,
         timestamp: new Date(),
       });
-    }, 1000);
+    } catch (error) {
+      console.error('AI chat error:', error);
+      const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+      addMessage({
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `すみません、AIとの通信に失敗しました。\n\nエラー: ${errorMessage}\n\nOllamaが起動しているか確認してください（http://localhost:11434）`,
+        timestamp: new Date(),
+      });
+    } finally {
+      setAIThinking(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
