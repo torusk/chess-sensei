@@ -5,6 +5,7 @@ import { useState } from 'react';
 export function BoardControls() {
   const { 
     analysis, 
+    goToMove,
     goToFirst, 
     goToLast, 
     goToPrevious, 
@@ -14,7 +15,8 @@ export function BoardControls() {
     resetGame,
     flipBoard,
     switchToBranch,
-    deleteBranch
+    deleteBranch,
+    getActiveLine
   } = useGameStore();
   
   const [copied, setCopied] = useState<'pgn' | 'fen' | null>(null);
@@ -35,34 +37,12 @@ export function BoardControls() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  // 手順を整形して表示
-  const formatMoves = () => {
-    const lines: string[] = [];
-    let currentLine = '';
-    
-    analysis.history.forEach((item) => {
-      if (item.isWhite) {
-        currentLine = `${item.moveNumber}. ${item.move}`;
-      } else {
-        currentLine += ` ${item.move}`;
-        lines.push(currentLine);
-        currentLine = '';
-      }
-    });
-    
-    // 白の手だけがある場合
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-    
-    return lines;
-  };
-
-  const moveLines = formatMoves();
+  // アクティブライン（メインまたは分岐）を取得
+  const activeLine = getActiveLine();
   const currentMoveNum = analysis.currentMoveIndex >= 0 
     ? Math.floor(analysis.currentMoveIndex / 2) + 1 
     : 0;
-  const totalMoves = Math.ceil(analysis.history.length / 2);
+  const totalMoves = Math.ceil(activeLine.length / 2);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200">
@@ -78,22 +58,28 @@ export function BoardControls() {
           </span>
         </div>
         
-        {/* 手順表示エリア */}
-        <div className="h-20 overflow-y-auto px-3 py-2 text-xs font-mono bg-slate-50/50">
-          {moveLines.length === 0 ? (
+        {/* 手順表示エリア - クリック可能な手 */}
+        <div className="h-24 overflow-y-auto px-3 py-2 text-xs bg-slate-50/50">
+          {activeLine.length === 0 ? (
             <p className="text-slate-400 text-center py-4">まだ手が指されていません</p>
           ) : (
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {moveLines.map((line, lineIndex) => {
-                const isCurrentLine = Math.floor(analysis.currentMoveIndex / 2) === lineIndex;
+            <div className="flex flex-wrap gap-x-1 gap-y-1">
+              {activeLine.map((item, index) => {
+                const isCurrentMove = analysis.currentMoveIndex === index;
                 
                 return (
-                  <span 
-                    key={lineIndex}
-                    className={`${isCurrentLine ? 'bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded' : 'text-slate-600'}`}
+                  <button
+                    key={index}
+                    onClick={() => goToMove(index)}
+                    className={`px-1.5 py-0.5 rounded transition-all hover:scale-105 ${
+                      isCurrentMove 
+                        ? 'bg-blue-500 text-white font-semibold shadow-sm' 
+                        : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                    }`}
+                    title={`${item.moveNumber}. ${item.move} - クリックしてこの局面へ`}
                   >
-                    {line}
-                  </span>
+                    {item.isWhite ? `${item.moveNumber}.` : ''}{item.move}
+                  </button>
                 );
               })}
             </div>
