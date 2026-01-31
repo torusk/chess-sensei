@@ -122,9 +122,9 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="panel h-full flex flex-col">
+    <div className="panel h-[700px] flex flex-col">
       {/* ヘッダー */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 shrink-0">
         <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-accent" />
         </div>
@@ -134,8 +134,8 @@ export function ChatPanel() {
         </div>
       </div>
 
-      {/* メッセージエリア */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px]">
+      {/* メッセージエリア - スクロール可能 */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
@@ -183,7 +183,7 @@ export function ChatPanel() {
       </div>
 
       {/* 入力エリア */}
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-gray-100 shrink-0">
         <div className="flex gap-2">
           <textarea
             value={input}
