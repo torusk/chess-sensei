@@ -1,60 +1,40 @@
 import { useGameStore } from '../store/useGameStore';
-import { Clock, RotateCcw, FlipHorizontal } from 'lucide-react';
+import { RotateCcw, FlipHorizontal } from 'lucide-react';
 
 export function GameInfo() {
-  const { game, orientation, resetGame, flipBoard, mode } = useGameStore();
-
-  const getModeTitle = () => {
-    switch (mode) {
-      case 'play': return '対局モード';
-      case 'puzzle': return '詰め問題';
-      case 'opening': return 'オープニング練習';
-      case 'analysis': return '解析モード';
-      default: return '';
-    }
-  };
+  const { game, resetGame, flipBoard } = useGameStore();
 
   return (
-    <div className="panel p-4 space-y-4">
-      <div>
-        <h3 className="font-semibold text-lg">{getModeTitle()}</h3>
-        <p className="text-sm text-text-secondary">
-          {game.turn() === 'w' ? '白番' : '黒番'}の手番です
-        </p>
-      </div>
-
-      {game.isCheck() && (
-        <div className="bg-error/10 text-error px-3 py-2 rounded-lg text-sm font-medium">
-          チェック！
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${game.turn() === 'w' ? 'bg-white border-2 border-slate-400' : 'bg-slate-800'}`} />
+          <div>
+            <p className="text-sm font-semibold text-slate-700">
+              {game.turn() === 'w' ? '白番' : '黒番'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {game.isCheck() ? 'チェック！' : `${game.history().length}手目`}
+            </p>
+          </div>
         </div>
-      )}
-
-      {game.isCheckmate() && (
-        <div className="bg-error text-white px-3 py-2 rounded-lg text-sm font-medium">
-          チェックメイト！
+        
+        <div className="flex gap-1">
+          <button 
+            onClick={resetGame}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
+            title="リセット"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={flipBoard}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
+            title="盤面反転"
+          >
+            <FlipHorizontal className="w-4 h-4" />
+          </button>
         </div>
-      )}
-
-      <div className="flex items-center gap-2 text-sm text-text-secondary">
-        <Clock className="w-4 h-4" />
-        <span>手数: {game.history().length}</span>
-      </div>
-
-      <div className="flex gap-2">
-        <button 
-          onClick={resetGame}
-          className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm"
-        >
-          <RotateCcw className="w-4 h-4" />
-          リセット
-        </button>
-        <button 
-          onClick={flipBoard}
-          className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm"
-        >
-          <FlipHorizontal className="w-4 h-4" />
-          {orientation === 'white' ? '黒側' : '白側'}
-        </button>
       </div>
     </div>
   );
