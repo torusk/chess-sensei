@@ -6,20 +6,20 @@ import { Bot, Play, Pause } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function AIOpponentMode() {
-  const { mode, gameState, setGameState, addMessage, setAIThinking } = useGameStore();
+  const { mode, game, addMessage, setAIThinking } = useGameStore();
   const { evaluate, isReady } = useStockfish();
   const [isPlaying, setIsPlaying] = useState(false);
   const [aiLevel, setAiLevel] = useState(10); // Stockfish depth (1-20)
 
   // AIの手を計算して実行
   const makeAIMove = useCallback(async () => {
-    if (!isPlaying || gameState.isCheckmate || gameState.isDraw) return;
+    if (!isPlaying || game.isCheckmate() || game.isDraw()) return;
 
     setAIThinking(true);
     
     try {
       // Stockfishで最善手を計算
-      const { bestMove, evaluation } = await evaluate(gameState.fen, aiLevel);
+      const { bestMove, evaluation } = await evaluate(game.fen(), aiLevel);
       
       if (!bestMove || bestMove === '(none)') {
         console.log('Game over or no legal moves');
@@ -43,7 +43,7 @@ export function AIOpponentMode() {
         },
         {
           role: 'user',
-          content: `局面（FEN）: ${gameState.fen}\nコンピュータが選んだ手: ${moveNotation}\n評価値: ${evaluation > 0 ? '+' : ''}${evaluation.toFixed(2)}\n\nこの手の意図と戦略的な考え方を解説してください。`
+          content: `局面（FEN）: ${game.fen()}\nコンピュータが選んだ手: ${moveNotation}\n評価値: ${evaluation > 0 ? '+' : ''}${evaluation.toFixed(2)}\n\nこの手の意図と戦略的な考え方を解説してください。`
         }
       ];
 
@@ -74,14 +74,14 @@ export function AIOpponentMode() {
     } finally {
       setAIThinking(false);
     }
-  }, [isPlaying, gameState.fen, gameState.isCheckmate, gameState.isDraw, aiLevel, evaluate, addMessage, setAIThinking]);
+  }, [isPlaying, game, aiLevel, evaluate, addMessage, setAIThinking]);
 
   // ゲーム状態が変わったらAIの手を打つ
   useEffect(() => {
-    if (isPlaying && gameState.turn === 'b') { // 黒番（AI側）の時
+    if (isPlaying && game.turn() === 'b') { // 黒番（AI側）の時
       makeAIMove();
     }
-  }, [isPlaying, gameState.turn, gameState.fen, makeAIMove]);
+  }, [isPlaying, game, makeAIMove]);
 
   if (mode !== 'play') return null;
 

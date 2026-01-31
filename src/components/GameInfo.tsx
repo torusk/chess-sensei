@@ -2,7 +2,7 @@ import { useGameStore } from '../store/useGameStore';
 import { Clock, RotateCcw, FlipHorizontal } from 'lucide-react';
 
 export function GameInfo() {
-  const { gameState, orientation, resetGame, flipBoard, mode } = useGameStore();
+  const { game, orientation, resetGame, flipBoard, mode } = useGameStore();
 
   const getModeTitle = () => {
     switch (mode) {
@@ -19,17 +19,17 @@ export function GameInfo() {
       <div>
         <h3 className="font-semibold text-lg">{getModeTitle()}</h3>
         <p className="text-sm text-text-secondary">
-          {gameState.turn === 'w' ? '白番' : '黒番'}の手番です
+          {game.turn() === 'w' ? '白番' : '黒番'}の手番です
         </p>
       </div>
 
-      {gameState.isCheck && (
+      {game.isCheck() && (
         <div className="bg-error/10 text-error px-3 py-2 rounded-lg text-sm font-medium">
           チェック！
         </div>
       )}
 
-      {gameState.isCheckmate && (
+      {game.isCheckmate() && (
         <div className="bg-error text-white px-3 py-2 rounded-lg text-sm font-medium">
           チェックメイト！
         </div>
@@ -37,7 +37,7 @@ export function GameInfo() {
 
       <div className="flex items-center gap-2 text-sm text-text-secondary">
         <Clock className="w-4 h-4" />
-        <span>手数: {gameState.history.length}</span>
+        <span>手数: {game.history().length}</span>
       </div>
 
       <div className="flex gap-2">

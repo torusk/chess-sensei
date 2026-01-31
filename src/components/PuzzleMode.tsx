@@ -19,7 +19,6 @@ export function PuzzleMode() {
     currentPuzzle, 
     loadPuzzle, 
     puzzleIndex,
-    gameState,
     resetGame 
   } = useGameStore();
   

@@ -10,7 +10,7 @@ interface ChatMessage {
 }
 
 export function ChatPanel() {
-  const { messages, isAIThinking, addMessage, setAIThinking, mode, gameState } = useGameStore();
+  const { messages, isAIThinking, addMessage, setAIThinking, mode } = useGameStore();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

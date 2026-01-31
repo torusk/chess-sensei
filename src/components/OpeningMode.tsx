@@ -18,9 +18,7 @@ export function OpeningMode() {
     mode, 
     currentOpening, 
     openingStep,
-    loadOpening,
-    gameState,
-    setGameState
+    loadOpening
   } = useGameStore();
   
   const [openings, setOpenings] = useState<Opening[]>([]);
