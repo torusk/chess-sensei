@@ -23,7 +23,7 @@ export function PuzzleMode() {
   } = useGameStore();
   
   const [puzzles, setPuzzles] = useState<Puzzle[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [solved, setSolved] = useState(false);
   const [attempts, setAttempts] = useState(0);

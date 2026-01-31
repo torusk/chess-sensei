@@ -137,7 +137,7 @@ export function ChatPanel() {
       {/* メッセージエリア */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 10 }}

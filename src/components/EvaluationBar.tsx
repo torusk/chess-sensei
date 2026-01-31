@@ -1,5 +1,3 @@
-import { useGameStore } from '../store/useGameStore';
-
 export function EvaluationBar() {
   // 仮の評価値（実際はStockfishから取得）
   const evaluation = 0.5; // -10 〜 +10

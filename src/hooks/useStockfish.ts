@@ -14,6 +14,7 @@ export function useStockfish(): StockfishEngine {
     
     try {
       // Stockfish WASMを動的にインポート
+      // @ts-ignore - stockfish is an optional dependency
       const Stockfish = await import('stockfish');
       const engine = Stockfish.default || Stockfish;
       

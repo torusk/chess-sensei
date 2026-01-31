@@ -11,7 +11,7 @@ import {
   List,
   CheckCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export function OpeningMode() {
   const { 
@@ -22,7 +22,7 @@ export function OpeningMode() {
   } = useGameStore();
   
   const [openings, setOpenings] = useState<Opening[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [studyMode, setStudyMode] = useState<'learn' | 'test'>('learn');
   const [showList, setShowList] = useState(true);
 

@@ -13,7 +13,7 @@ export function useComputerOpponent() {
   const isReady = true; // 簡易実装：常に準備完了
 
   // 簡易実装：ランダムな合法手を返す（デモ用）
-  const getComputerMove = useCallback(async (fen: string): Promise<StockfishMove | null> => {
+  const getComputerMove = useCallback(async (_fen: string): Promise<StockfishMove | null> => {
     setIsThinking(true);
     
     // デモ用：少し待ってからnullを返す（実際の実装は後で）
