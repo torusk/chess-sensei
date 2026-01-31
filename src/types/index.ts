@@ -53,3 +53,22 @@ export interface PuzzleAttempt {
 }
 
 export type BoardOrientation = 'white' | 'black';
+
+export interface MoveHistoryItem {
+  move: string; // SAN format like "e4", "Nf3"
+  fen: string;
+  moveNumber: number;
+  isWhite: boolean;
+}
+
+export interface BranchPoint {
+  moveIndex: number;
+  moves: MoveHistoryItem[];
+}
+
+export interface AnalysisState {
+  history: MoveHistoryItem[];
+  currentMoveIndex: number;
+  branches: BranchPoint[];
+  isNavigating: boolean;
+}
