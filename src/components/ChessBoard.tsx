@@ -1,25 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Chessboard } from 'react-chessboard';
-import { Chess } from 'chess.js';
 import { useGameStore } from '../store/useGameStore';
 import { Square } from 'react-chessboard/dist/chessboard/types';
 
 export function ChessBoard() {
-  const { gameState, orientation, setGameState, makeMove, mode, currentPuzzle } = useGameStore();
-  const [game, setGame] = useState(new Chess(gameState.fen));
+  const { game, orientation, makeMove } = useGameStore();
   const [moveFrom, setMoveFrom] = useState<Square | null>(null);
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
   const [rightClickedSquares, setRightClickedSquares] = useState<Record<string, any>>({});
-
-  // FENが変更された時にゲーム状態を更新
-  useEffect(() => {
-    try {
-      const newGame = new Chess(gameState.fen);
-      setGame(newGame);
-    } catch (e) {
-      console.error('Invalid FEN:', gameState.fen);
-    }
-  }, [gameState.fen]);
 
   // 合法手の表示
   const getMoveOptions = useCallback((square: Square) => {
@@ -66,24 +54,18 @@ export function ChessBoard() {
       );
 
       if (foundMove) {
-        // プロモーション処理
-        const gameCopy = new Chess(game.fen());
-        const move = gameCopy.move({
-          from: moveFrom,
-          to: square,
-          promotion: 'q', // 自動でクイーンにプロモーション
-        });
-
-        if (move) {
-          setGame(gameCopy);
-          setGameState({
-            fen: gameCopy.fen(),
-            turn: gameCopy.turn(),
-            isCheck: gameCopy.isCheck(),
-            isCheckmate: gameCopy.isCheckmate(),
-            isDraw: gameCopy.isDraw(),
-          });
-          makeMove(moveFrom, square, 'q');
+        // プロモーション自動判定
+        const isPromotion = 
+          game.get(moveFrom)?.type === 'p' && 
+          (square[1] === '8' || square[1] === '1');
+        
+        const promotion = isPromotion ? 'q' : undefined;
+        
+        // ストアのmakeMoveを呼ぶ（履歴も自動更新される）
+        const success = makeMove(moveFrom, square, promotion);
+        
+        if (!success) {
+          console.error('Move failed:', moveFrom, square);
         }
       }
       
@@ -95,7 +77,7 @@ export function ChessBoard() {
     // 新しい移動元を選択
     const hasOptions = getMoveOptions(square);
     if (hasOptions) setMoveFrom(square);
-  }, [game, moveFrom, getMoveOptions, setGameState, makeMove]);
+  }, [game, moveFrom, getMoveOptions, makeMove]);
 
   // 右クリック（マーカー）
   const onSquareRightClick = useCallback((square: Square) => {
@@ -108,11 +90,6 @@ export function ChessBoard() {
           : { backgroundColor: colour },
     }));
   }, []);
-
-  // カスタム駒スタイル（リッチな見た目）
-  const customPieces = {
-    // 必要に応じてカスタム駒を定義
-  };
 
   return (
     <div className="chess-board-container">

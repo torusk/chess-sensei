@@ -7,6 +7,8 @@ import { GameInfo } from './components/GameInfo';
 import { EvaluationBar } from './components/EvaluationBar';
 import { PuzzleMode } from './components/PuzzleMode';
 import { OpeningMode } from './components/OpeningMode';
+import { PositionLoader } from './components/PositionLoader';
+import { MoveHistory } from './components/MoveHistory';
 
 function App() {
   const { mode } = useGameStore();
@@ -14,14 +16,28 @@ function App() {
   const renderLeftPanel = () => {
     switch (mode) {
       case 'puzzle':
-        return <PuzzleMode />;
+        return (
+          <>
+            <PuzzleMode />
+            <PositionLoader />
+            <MoveHistory />
+          </>
+        );
       case 'opening':
-        return <OpeningMode />;
+        return (
+          <>
+            <OpeningMode />
+            <PositionLoader />
+            <MoveHistory />
+          </>
+        );
       default:
         return (
           <>
             <ModeSelector />
             <GameInfo />
+            <PositionLoader />
+            <MoveHistory />
           </>
         );
     }
