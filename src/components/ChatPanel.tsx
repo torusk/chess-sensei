@@ -19,18 +19,20 @@ export function ChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isAIThinking]);
 
-  // 初回メッセージ
+  // 初回メッセージ（ StrictMode対策でフラグ使用）
+  const hasAddedWelcome = useRef(false);
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !hasAddedWelcome.current) {
+      hasAddedWelcome.current = true;
       const welcomeMessage = getWelcomeMessage(mode);
       addMessage({
-        id: 'welcome',
+        id: `welcome-${Date.now()}`,
         role: 'assistant',
         content: welcomeMessage,
         timestamp: new Date(),
       });
     }
-  }, [mode, messages.length, addMessage]);
+  }, []); // modeが変わっても再実行しない
 
   const getWelcomeMessage = (mode: string) => {
     switch (mode) {
@@ -61,6 +63,9 @@ export function ChatPanel() {
     setInput('');
     setAIThinking(true);
 
+    // デバッグログ
+    console.log('[Chat] Starting AI request...');
+
     try {
       // 直近10件のコンテキストを作成
       const recentMessages: ChatMessage[] = messages
@@ -78,11 +83,16 @@ export function ChatPanel() {
 
       const allMessages = [systemPrompt, ...recentMessages];
 
+      console.log('[Chat] Sending messages:', allMessages);
+      console.log('[Chat] Invoking Tauri command...');
+
       // Tauri経由でバックエンドのOllama APIを呼び出し
       const response: string = await invoke('chat_with_ai', {
         messages: allMessages,
         model: 'qwen2.5:14b'
       });
+
+      console.log('[Chat] Response received:', response);
 
       addMessage({
         id: (Date.now() + 1).toString(),

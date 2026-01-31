@@ -32,9 +32,7 @@ function App() {
       <div className="h-full flex gap-6 p-6">
         {/* 左パネル：モード別UI */}
         <div className="w-72 flex flex-col gap-4">
-          {mode !== 'puzzle' && mode !== 'opening' && <ModeSelector />}
           {renderLeftPanel()}
-          {(mode === 'puzzle' || mode === 'opening') && <GameInfo />}
         </div>
 
         {/* 中央：チェス盤 */}
