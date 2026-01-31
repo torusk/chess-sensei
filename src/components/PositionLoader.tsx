@@ -41,7 +41,7 @@ export function PositionLoader() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+    <div className="flex-1 min-h-[300px] bg-white rounded-lg shadow-sm border border-slate-200 p-3">
       <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
         <Upload className="w-4 h-4" />
         局面読み込み

@@ -20,6 +20,13 @@ export function BoardControls() {
   } = useGameStore();
   
   const [copied, setCopied] = useState<'pgn' | 'fen' | null>(null);
+  const [copiedMoveIndex, setCopiedMoveIndex] = useState<number | null>(null);
+
+  const handleCopyMoveFEN = async (fen: string, index: number) => {
+    await navigator.clipboard.writeText(fen);
+    setCopiedMoveIndex(index);
+    setTimeout(() => setCopiedMoveIndex(null), 2000);
+  };
 
   const handleCopyPGN = async () => {
     const pgn = exportPGN();
@@ -58,7 +65,7 @@ export function BoardControls() {
           </span>
         </div>
         
-        {/* 手順表示エリア - クリック可能な手 */}
+        {/* 手順表示エリア - クリック可能な手 + FENコピー */}
         <div className="h-24 overflow-y-auto px-3 py-2 text-xs bg-slate-50/50">
           {activeLine.length === 0 ? (
             <p className="text-slate-400 text-center py-4">まだ手が指されていません</p>
@@ -66,20 +73,35 @@ export function BoardControls() {
             <div className="flex flex-wrap gap-x-1 gap-y-1">
               {activeLine.map((item, index) => {
                 const isCurrentMove = analysis.currentMoveIndex === index;
+                const isCopied = copiedMoveIndex === index;
                 
                 return (
-                  <button
-                    key={index}
-                    onClick={() => goToMove(index)}
-                    className={`px-1.5 py-0.5 rounded transition-all hover:scale-105 ${
-                      isCurrentMove 
-                        ? 'bg-blue-500 text-white font-semibold shadow-sm' 
-                        : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
-                    }`}
-                    title={`${item.moveNumber}. ${item.move} - クリックしてこの局面へ`}
-                  >
-                    {item.isWhite ? `${item.moveNumber}.` : ''}{item.move}
-                  </button>
+                  <div key={index} className="flex items-center gap-0.5 group">
+                    <button
+                      onClick={() => goToMove(index)}
+                      className={`px-1.5 py-0.5 rounded transition-all hover:scale-105 ${
+                        isCurrentMove 
+                          ? 'bg-blue-500 text-white font-semibold shadow-sm' 
+                          : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                      title={`${item.moveNumber}. ${item.move} - クリックしてこの局面へ`}
+                    >
+                      {item.isWhite ? `${item.moveNumber}.` : ''}{item.move}
+                    </button>
+                    {/* FENコピーボタン - ホバー時表示 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyMoveFEN(item.fen, index);
+                      }}
+                      className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-slate-200 ${
+                        isCopied ? 'text-green-600 opacity-100' : 'text-slate-400'
+                      }`}
+                      title="この局面のFENをコピー"
+                    >
+                      {isCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
                 );
               })}
             </div>

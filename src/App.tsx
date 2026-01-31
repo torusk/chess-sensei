@@ -14,9 +14,9 @@ function App() {
 
   return (
     <Layout>
-      <div className="h-full flex gap-6 p-6 min-w-[1200px] items-start">
-        {/* 左パネル：モード・局面読込 - 中央に高さ合わせ */}
-        <div className="w-64 flex flex-col gap-4 shrink-0 self-start">
+      <div className="flex-1 flex gap-6 p-6 min-w-[1200px]">
+        {/* 左パネル */}
+        <div className="w-64 flex flex-col gap-4 shrink-0">
           <ModeSelector />
           {mode === 'puzzle' && <PuzzleMode />}
           {mode === 'opening' && <OpeningMode />}
@@ -24,7 +24,7 @@ function App() {
           <PositionLoader />
         </div>
 
-        {/* 中央：チェス盤 + コントロール */}
+        {/* 中央 */}
         <div className="flex-1 flex flex-col items-center gap-4 min-w-0">
           <ChessBoard />
           <div className="w-[560px]">
@@ -32,8 +32,8 @@ function App() {
           </div>
         </div>
 
-        {/* 右パネル：AIチャット - 中央に高さ合わせ */}
-        <div className="w-80 shrink-0 self-start">
+        {/* 右パネル */}
+        <div className="w-80 flex flex-col shrink-0">
           <ChatPanel />
         </div>
       </div>
