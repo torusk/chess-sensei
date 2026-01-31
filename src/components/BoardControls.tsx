@@ -127,44 +127,44 @@ export function BoardControls() {
           </div>
         )}
         
-        {/* ナビゲーションボタン */}
-        <div className="flex items-center justify-center gap-1">
+        {/* ナビゲーションボタン - 大きく使いやすく */}
+        <div className="flex items-center justify-center gap-2">
           <button
             onClick={goToFirst}
             disabled={analysis.currentMoveIndex < 0}
-            className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            title="最初"
+            className="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-100 transition-all active:scale-95"
+            title="最初に戻る"
           >
-            <ChevronFirst className="w-4 h-4 text-slate-600" />
+            <ChevronFirst className="w-6 h-6 text-slate-700" />
           </button>
           <button
             onClick={goToPrevious}
             disabled={analysis.currentMoveIndex < 0}
-            className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            title="前へ"
+            className="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-100 transition-all active:scale-95"
+            title="1手戻る"
           >
-            <ChevronLeft className="w-4 h-4 text-slate-600" />
+            <ChevronLeft className="w-6 h-6 text-slate-700" />
           </button>
           
-          <div className="mx-2 px-3 py-1 bg-slate-100 rounded-md text-xs font-medium text-slate-600 min-w-[4rem] text-center">
+          <div className="mx-3 px-4 py-2 bg-blue-50 rounded-lg text-sm font-semibold text-blue-700 min-w-[5rem] text-center border border-blue-100">
             {analysis.currentMoveIndex + 1} / {analysis.history.length}
           </div>
           
           <button
             onClick={goToNext}
             disabled={analysis.currentMoveIndex >= analysis.history.length - 1}
-            className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            title="次へ"
+            className="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-100 transition-all active:scale-95"
+            title="1手進む"
           >
-            <ChevronRight className="w-4 h-4 text-slate-600" />
+            <ChevronRight className="w-6 h-6 text-slate-700" />
           </button>
           <button
             onClick={goToLast}
             disabled={analysis.currentMoveIndex >= analysis.history.length - 1}
-            className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            title="最後"
+            className="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-100 transition-all active:scale-95"
+            title="最後に進む"
           >
-            <ChevronLast className="w-4 h-4 text-slate-600" />
+            <ChevronLast className="w-6 h-6 text-slate-700" />
           </button>
         </div>
 
