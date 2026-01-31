@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/useGameStore';
-import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Copy, Check, RotateCcw, FlipHorizontal } from 'lucide-react';
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Copy, Check, RotateCcw, FlipHorizontal, GitBranch, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 export function BoardControls() {
@@ -12,7 +12,9 @@ export function BoardControls() {
     exportPGN, 
     exportFEN,
     resetGame,
-    flipBoard
+    flipBoard,
+    switchToBranch,
+    deleteBranch
   } = useGameStore();
   
   const [copied, setCopied] = useState<'pgn' | 'fen' | null>(null);
@@ -101,6 +103,44 @@ export function BoardControls() {
 
       {/* 下部：コントロール */}
       <div className="p-3 space-y-3">
+        {/* ブランチ管理 */}
+        {(analysis.branches.length > 0 || analysis.activeBranchId) && (
+          <div className="flex items-center gap-2">
+            <select
+              value={analysis.activeBranchId || ''}
+              onChange={(e) => switchToBranch(e.target.value || null)}
+              className="flex-1 text-xs bg-white border border-slate-200 rounded-md px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Main Line</option>
+              {analysis.branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+            
+            {analysis.activeBranchId && (
+              <button
+                onClick={() => deleteBranch(analysis.activeBranchId!)}
+                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                title="Delete Branch"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+        
+        {/* ブランチインジケーター */}
+        {analysis.activeBranchId && (
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 rounded-md">
+            <GitBranch className="w-3 h-3 text-purple-600" />
+            <span className="text-xs text-purple-700 font-medium">
+              {analysis.branches.find(b => b.id === analysis.activeBranchId)?.name || 'Branch'}
+            </span>
+          </div>
+        )}
+        
         {/* ナビゲーションボタン */}
         <div className="flex items-center justify-center gap-1">
           <button

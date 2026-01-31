@@ -4,7 +4,6 @@ import { ChessBoard } from './components/ChessBoard';
 import { ModeSelector } from './components/ModeSelector';
 import { ChatPanel } from './components/ChatPanel';
 import { GameInfo } from './components/GameInfo';
-import { EvaluationBar } from './components/EvaluationBar';
 import { PuzzleMode } from './components/PuzzleMode';
 import { OpeningMode } from './components/OpeningMode';
 import { PositionLoader } from './components/PositionLoader';
@@ -27,10 +26,7 @@ function App() {
 
         {/* 中央：チェス盤 + コントロール */}
         <div className="flex-1 flex flex-col items-center justify-start gap-4 min-w-0">
-          <div className="flex items-start gap-4">
-            <EvaluationBar />
-            <ChessBoard />
-          </div>
+          <ChessBoard />
           <div className="w-[560px]">
             <BoardControls />
           </div>

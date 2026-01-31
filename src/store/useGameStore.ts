@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
-import { GameMode, Puzzle, Opening, ChatMessage, PuzzleAttempt, MoveHistoryItem, AnalysisState } from '../types';
+import { GameMode, Puzzle, Opening, ChatMessage, PuzzleAttempt, MoveHistoryItem, AnalysisState, Branch } from '../types';
 
 interface GameStore {
   // ゲーム状態
@@ -41,8 +41,11 @@ interface GameStore {
   goToPrevious: () => void;
   goToNext: () => void;
   
-  // 分岐
-  createBranch: (fromIndex: number) => void;
+  // 分岐管理
+  createBranch: (fromIndex: number) => string;
+  switchToBranch: (branchId: string | null) => void;
+  deleteBranch: (branchId: string) => void;
+  getActiveLine: () => MoveHistoryItem[];
   
   // エクスポート
   exportPGN: () => string;
@@ -68,8 +71,11 @@ const createInitialAnalysis = (): AnalysisState => ({
   history: [],
   currentMoveIndex: -1,
   branches: [],
+  activeBranchId: null,
   isNavigating: false,
 });
+
+const generateBranchId = () => `branch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export const useGameStore = create<GameStore>((set, get) => ({
   mode: 'play',
@@ -94,20 +100,60 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const newHistoryItem: MoveHistoryItem = {
         move: move.san,
         fen: game.fen(),
-        moveNumber: Math.floor((analysis.history.length + 1) / 2) + 1,
+        moveNumber: 0, // Will be calculated based on position
         isWhite: game.turn() === 'b',
       };
       
-      // ナビゲーション中なら分岐を作成
-      if (analysis.isNavigating && analysis.currentMoveIndex < analysis.history.length - 1) {
-        const currentBranch = analysis.branches.find(b => b.moveIndex === analysis.currentMoveIndex);
-        if (currentBranch) {
-          currentBranch.moves.push(newHistoryItem);
-        } else {
-          get().createBranch(analysis.currentMoveIndex);
-        }
+      const activeBranch = analysis.activeBranchId 
+        ? analysis.branches.find(b => b.id === analysis.activeBranchId)
+        : null;
+      
+      if (activeBranch) {
+        // We're in a branch - append to the branch
+        const branchMoveIndex = activeBranch.moves.length;
+        newHistoryItem.moveNumber = Math.floor((activeBranch.parentMoveIndex + branchMoveIndex + 2) / 2) + 1;
+        newHistoryItem.isWhite = (activeBranch.parentMoveIndex + branchMoveIndex + 1) % 2 === 0;
+        
+        set((state) => ({
+          analysis: {
+            ...state.analysis,
+            branches: state.analysis.branches.map(b =>
+              b.id === activeBranch.id
+                ? { ...b, moves: [...b.moves, newHistoryItem] }
+                : b
+            ),
+            isNavigating: false,
+          },
+        }));
+      } else if (analysis.isNavigating && analysis.currentMoveIndex < analysis.history.length - 1) {
+        // Navigating in main line and not at last position - create a new branch
+        const fromIndex = analysis.currentMoveIndex;
+        const branchId = generateBranchId();
+        const branchName = `Variation ${analysis.branches.length + 1}`;
+        
+        newHistoryItem.moveNumber = Math.floor((fromIndex + 2) / 2) + 1;
+        newHistoryItem.isWhite = (fromIndex + 1) % 2 === 0;
+        
+        const newBranch: Branch = {
+          id: branchId,
+          name: branchName,
+          moves: [newHistoryItem],
+          parentMoveIndex: fromIndex,
+        };
+        
+        set((state) => ({
+          analysis: {
+            ...state.analysis,
+            branches: [...state.analysis.branches, newBranch],
+            activeBranchId: branchId,
+            isNavigating: false,
+          },
+        }));
       } else {
-        // 通常の手順追加
+        // At end of main line - append to main line
+        newHistoryItem.moveNumber = Math.floor((analysis.history.length + 1) / 2) + 1;
+        newHistoryItem.isWhite = (analysis.history.length) % 2 === 0;
+        
         set((state) => ({
           analysis: {
             ...state.analysis,
@@ -181,10 +227,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         game: newGame,
         analysis: {
+          ...createInitialAnalysis(),
           history,
           currentMoveIndex: history.length - 1,
-          branches: [],
-          isNavigating: false,
         },
         mode: 'analysis',
       });
@@ -192,18 +237,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch {
       return false;
     }
-    return false;
   },
   
   // 履歴ナビゲーション
   goToMove: (index) => {
-    const { analysis } = get();
-    if (index < -1 || index >= analysis.history.length) return;
+    const { getActiveLine } = get();
+    const activeLine = getActiveLine();
+    
+    if (index < -1 || index >= activeLine.length) return;
     
     const newGame = new Chess();
     if (index >= 0) {
       // 指定手まで再生
-      analysis.history.slice(0, index + 1).forEach(item => {
+      activeLine.slice(0, index + 1).forEach(item => {
         newGame.move(item.move);
       });
     }
@@ -221,8 +267,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   goToFirst: () => get().goToMove(-1),
   
   goToLast: () => {
-    const { analysis } = get();
-    get().goToMove(analysis.history.length - 1);
+    const { getActiveLine } = get();
+    const activeLine = getActiveLine();
+    get().goToMove(activeLine.length - 1);
   },
   
   goToPrevious: () => {
@@ -237,29 +284,113 @@ export const useGameStore = create<GameStore>((set, get) => ({
   
   // 分岐作成
   createBranch: (fromIndex) => {
+    const branchId = generateBranchId();
+    const branchName = `Variation ${get().analysis.branches.length + 1}`;
+    
     set((state) => ({
       analysis: {
         ...state.analysis,
         branches: [
           ...state.analysis.branches,
-          { moveIndex: fromIndex, moves: [] },
+          { id: branchId, name: branchName, moves: [], parentMoveIndex: fromIndex },
         ],
       },
     }));
+    
+    return branchId;
+  },
+  
+  // 分岐切り替え
+  switchToBranch: (branchId) => {
+    const { analysis } = get();
+    
+    if (branchId === null) {
+      // Switch to main line
+      const newGame = new Chess();
+      set((state) => ({
+        game: newGame,
+        analysis: {
+          ...state.analysis,
+          activeBranchId: null,
+          currentMoveIndex: -1,
+          isNavigating: true,
+        },
+      }));
+    } else {
+      const branch = analysis.branches.find(b => b.id === branchId);
+      if (!branch) return;
+      
+      // Load position up to the parent move index
+      const newGame = new Chess();
+      analysis.history.slice(0, branch.parentMoveIndex + 1).forEach(item => {
+        newGame.move(item.move);
+      });
+      
+      set((state) => ({
+        game: newGame,
+        analysis: {
+          ...state.analysis,
+          activeBranchId: branchId,
+          currentMoveIndex: -1, // Reset to start of branch
+          isNavigating: true,
+        },
+      }));
+    }
+  },
+  
+  // 分岐削除
+  deleteBranch: (branchId) => {
+    const { analysis } = get();
+    
+    // If currently in this branch, switch to main line
+    if (analysis.activeBranchId === branchId) {
+      const newGame = new Chess();
+      set((state) => ({
+        game: newGame,
+        analysis: {
+          ...state.analysis,
+          branches: state.analysis.branches.filter(b => b.id !== branchId),
+          activeBranchId: null,
+          currentMoveIndex: -1,
+          isNavigating: true,
+        },
+      }));
+    } else {
+      set((state) => ({
+        analysis: {
+          ...state.analysis,
+          branches: state.analysis.branches.filter(b => b.id !== branchId),
+        },
+      }));
+    }
+  },
+  
+  // アクティブライン取得
+  getActiveLine: () => {
+    const { analysis } = get();
+    
+    if (analysis.activeBranchId) {
+      const branch = analysis.branches.find(b => b.id === analysis.activeBranchId);
+      if (branch) {
+        // Combine main line up to parent index with branch moves
+        return [...analysis.history.slice(0, branch.parentMoveIndex + 1), ...branch.moves];
+      }
+    }
+    
+    return analysis.history;
   },
   
   // PGNエクスポート
   exportPGN: () => {
-    const { analysis } = get();
+    const { getActiveLine } = get();
+    const activeLine = getActiveLine();
     let pgn = '';
-    let moveNum = 1;
     
-    analysis.history.forEach((item) => {
+    activeLine.forEach((item) => {
       if (item.isWhite) {
-        pgn += `${moveNum}. ${item.move} `;
+        pgn += `${item.moveNumber}. ${item.move} `;
       } else {
         pgn += `${item.move} `;
-        moveNum++;
       }
     });
     
@@ -314,10 +445,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       openingStep: 0,
       game: newGame,
       analysis: {
+        ...createInitialAnalysis(),
         history,
         currentMoveIndex: history.length - 1,
-        branches: [],
-        isNavigating: false,
       },
       mode: 'opening',
     });

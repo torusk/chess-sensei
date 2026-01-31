@@ -61,14 +61,17 @@ export interface MoveHistoryItem {
   isWhite: boolean;
 }
 
-export interface BranchPoint {
-  moveIndex: number;
+export interface Branch {
+  id: string;
+  name: string;
   moves: MoveHistoryItem[];
+  parentMoveIndex: number; // どの手から分岐したか
 }
 
 export interface AnalysisState {
-  history: MoveHistoryItem[];
+  history: MoveHistoryItem[]; // メインライン
   currentMoveIndex: number;
-  branches: BranchPoint[];
+  branches: Branch[]; // 分岐リスト
+  activeBranchId: string | null; // 現在アクティブな分岐
   isNavigating: boolean;
 }
