@@ -9,7 +9,9 @@ import {
   Lightbulb,
   ChevronRight,
   ChevronLeft,
-  RotateCcw
+  RotateCcw,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,7 +21,8 @@ export function PuzzleMode() {
     currentPuzzle, 
     loadPuzzle, 
     puzzleIndex,
-    resetGame 
+    resetGame,
+    game
   } = useGameStore();
   
   const [puzzles, setPuzzles] = useState<Puzzle[]>([]);
@@ -27,6 +30,46 @@ export function PuzzleMode() {
   const [showHint, setShowHint] = useState(false);
   const [solved, setSolved] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [moveIndex, setMoveIndex] = useState(0);
+  const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | null }>({ type: null });
+
+  // ユーザーの手を監視して正解判定
+  useEffect(() => {
+    if (!currentPuzzle || solved) return;
+
+    const currentHistory = game.history();
+    if (currentHistory.length > moveIndex) {
+      // ユーザーが新しい手を指した
+      const lastMove = currentHistory[currentHistory.length - 1];
+      const correctMove = currentPuzzle.solution[moveIndex];
+
+      setMoveIndex(currentHistory.length);
+
+      if (lastMove === correctMove) {
+        // 正解
+        if (moveIndex + 1 >= currentPuzzle.solution.length) {
+          // 全ての手が正解
+          setFeedback({ type: 'correct' });
+          setSolved(true);
+          
+          // 2秒後に次の問題へ
+          setTimeout(() => {
+            handleNextPuzzle();
+          }, 2000);
+        } else {
+          // 次の手へ
+          setFeedback({ type: 'correct' });
+        }
+      } else {
+        // 不正解
+        setFeedback({ type: 'incorrect' });
+        setAttempts(attempts + 1);
+        
+        // 不正解の手を取り消す
+        game.undo();
+      }
+    }
+  }, [game.history().length, moveIndex, currentPuzzle, solved]);
 
   // パズルリスト取得
   useEffect(() => {
@@ -164,32 +207,61 @@ export function PuzzleMode() {
         )}
       </div>
 
-      {/* 統計 */}
-      <div className="panel p-4">
-        <h4 className="text-sm font-semibold mb-3">今回の挑戦</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-bg-secondary p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-text-secondary text-xs mb-1">
-              <RotateCcw className="w-3 h-3" />
-              試行回数
+        {/* 統計 */}
+        <div className="panel p-4">
+          <h4 className="text-sm font-semibold mb-3">今回の挑戦</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-bg-secondary p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-text-secondary text-xs mb-1">
+                <RotateCcw className="w-3 h-3" />
+                試行回数
+              </div>
+              <p className="text-xl font-semibold">{attempts}</p>
             </div>
-            <p className="text-xl font-semibold">{attempts}</p>
-          </div>
-          <div className="bg-bg-secondary p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-text-secondary text-xs mb-1">
-              <Clock className="w-3 h-3" />
-              ステータス
+            <div className="bg-bg-secondary p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-text-secondary text-xs mb-1">
+                <Clock className="w-3 h-3" />
+                ステータス
+              </div>
+              <p className="text-sm font-medium">
+                {solved ? (
+                  <span className="text-success">クリア!</span>
+                ) : (
+                  <span className="text-warning">挑戦中</span>
+                )}
+              </p>
             </div>
-            <p className="text-sm font-medium">
-              {solved ? (
-                <span className="text-success">クリア!</span>
-              ) : (
-                <span className="text-warning">挑戦中</span>
-              )}
-            </p>
           </div>
         </div>
-      </div>
+
+        {/* フィードバックメッセージ */}
+        <AnimatePresence>
+          {feedback && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`panel p-4 ${
+                feedback.type === 'correct' 
+                  ? 'bg-success/10 border-success/30' 
+                  : 'bg-error/10 border-error/30'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {feedback.type === 'correct' ? (
+                  <CheckCircle className="w-5 h-5 text-success" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-error" />
+                )}
+                <span className={`font-semibold ${
+                  feedback.type === 'correct' ? 'text-success' : 'text-error'
+                }`}>
+                  {feedback.type === 'correct' ? '正解！' : '不正解です...もう一度試してみよう'}
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div>
-  );
+   );
 }
