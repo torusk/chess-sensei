@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/useGameStore';
-import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Copy, Check, AlertCircle } from 'lucide-react';
 
 export function PositionLoader() {
   const [fenInput, setFenInput] = useState('');
   const [pgnInput, setPgnInput] = useState('');
   const [activeTab, setActiveTab] = useState<'pgn' | 'fen'>('pgn');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   
-  const { loadFEN, loadPGN } = useGameStore();
+  const { loadFEN, loadPGN, exportFEN } = useGameStore();
 
   const handleLoadFEN = () => {
     if (!fenInput.trim()) {
@@ -38,6 +39,14 @@ export function PositionLoader() {
     } else {
       setMessage({ type: 'error', text: '無効なPGNです' });
     }
+  };
+
+  const handleCopyCurrentFEN = async () => {
+    const fen = exportFEN();
+    await navigator.clipboard.writeText(fen);
+    setCopied(true);
+    setMessage({ type: 'success', text: 'FENをコピーしました' });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -125,6 +134,26 @@ export function PositionLoader() {
           {message.text}
         </div>
       )}
+
+      {/* 現在の局面FENコピー */}
+      <div className="mt-4 pt-3 border-t border-slate-100">
+        <button
+          onClick={handleCopyCurrentFEN}
+          className="w-full py-2 px-3 bg-green-500 text-white text-xs font-medium rounded-md hover:bg-green-600 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+        >
+          {copied ? (
+            <>
+              <Check className="w-4 h-4" />
+              コピー済み
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              現在の盤面をFENコピー
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
